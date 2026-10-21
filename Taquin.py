@@ -2,6 +2,8 @@ import tkinter as tk
 import heapq
 import math
 
+#hi again how's life
+
 class HeapItem:
     def __init__(self, grid, f, g, parent = None):
         self.grid = grid
@@ -16,11 +18,10 @@ OPEN = []
 CLOSED = {}
 PATH = set()
 
-INITIAL = [ [1, 2, 3], [8, 0, 4], [7, 6, 5], ]
-GOAL = [ [1, 2, 3], [0, 8, 4], [7, 6, 5], ]
+GOAL = [ [1, 2, 3], [8, 0, 4], [7, 6, 5], ]
 
-board = [row[:] for row in INITIAL]
 gboard = [row[:] for row in GOAL]
+board = [row[:] for row in GOAL] #copy not alias
 goal_pos = {}
 for r in range(3):
     for c in range(3):
@@ -42,13 +43,18 @@ def calcEuclidean(grid):
             h += math.sqrt((r - gr)**2 + (c - gc)**2 )
     return h
 
-def solve(): #need upfront check (if s0 is goal)
+def solve():
     global winState
+
     winState = False
     OPEN.clear()
     CLOSED.clear()
 
     s0 = [row[:] for row in board] #save init state
+    if key(s0) == key(gboard):
+        print("the grid already solved")
+        return
+    
     heapq.heappush(OPEN, HeapItem(s0, calcEuclidean(s0), 0, None))
     while winState == False and OPEN:
         sol = Astar()
@@ -60,15 +66,7 @@ def solve(): #need upfront check (if s0 is goal)
 
 def searchPos(grid):
     solStack = []
-    stop = False
-    for row in range(3):
-        for col in range(3):
-            if grid[row][col] == 0:
-                br, bc = row, col
-                stop = True
-                break
-        if stop == True:
-            break
+    br, bc = empty(grid)
 
     for dr, dc in [(-1,0), (1,0), (0,-1), (0,1)]:
             nr, nc = br + dr, bc + dc
@@ -98,16 +96,16 @@ def reconstructPath(Item):
     print(Item.grid)
 
     x = Item
-    y= 0
-    while x.parentState:
+    while x:
         PATH.add(x)
         x= x.parentState
-        y = CLOSED[key(x.grid)]
-        pass
+
+    sorted(PATH, key= lambda x: x.g)
+
 
     print("total steps req: " + str(Item.g))
     for g in PATH:
-        print(g.grid)
+        print(g.grid, g.g, g.f)
     return PATH
 
 
@@ -118,7 +116,7 @@ def reconstructPath(Item):
 def clicked(e):
     col = e.x // 100
     row = e.y // 100
-    erow, ecol = empty()
+    erow, ecol = empty(board)
     print("click (" + str(col) + "," + str(row) + ")= " + str(board[row][col]))
     if abs(col - ecol) + abs(row - erow) == 1 : 
         board[row][col], board[erow][ecol] = board[erow][ecol] , board[row][col]
@@ -127,10 +125,10 @@ def clicked(e):
     else:
         print("unable not adj")
 
-def empty():
+def empty(grid):
     for row in range(3):
         for col in range(3):
-            if board[row][col] == 0 :
+            if grid[row][col] == 0 :
                 return row, col
 
 def createBoard():
@@ -150,7 +148,6 @@ root = tk.Tk()
 root.title("Taquin")
 root.geometry("600x600")
 root.configure(bg="#18252D")
-print("helllooooooo")
 
 title = tk.Label(root, text="test", fg="white", bg="#421615",
                  font=("Helvetica", 20, "bold"))
@@ -163,6 +160,7 @@ canvas.pack(padx=10, pady=10)
 canvas.bind("<Button-1>", clicked)
 btn = tk.Button(root, text="Solve", command=solve)
 btn.pack(pady=20)
+
 
 createBoard()
 root.mainloop()
