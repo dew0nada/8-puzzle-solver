@@ -14,6 +14,7 @@ class HeapItem:
 
 OPEN = []
 CLOSED = {}
+PATH = set()
 
 INITIAL = [ [1, 2, 3], [8, 0, 4], [7, 6, 5], ]
 GOAL = [ [1, 2, 3], [0, 8, 4], [7, 6, 5], ]
@@ -80,8 +81,8 @@ def searchPos(grid):
 def Astar():
     global winState
     x = heapq.heappop(OPEN)
-    if key(x.g) not in CLOSED:
-        CLOSED[key(x.g)] = x
+    if key(x.grid) not in CLOSED:
+        CLOSED[key(x.grid)] = x
         for e in searchPos(x.grid):
             if calcEuclidean(e) == 0: #win
                 winState = True
@@ -92,8 +93,22 @@ def Astar():
                 heapq.heappush(OPEN, HeapItem(e, x.g+1+calcEuclidean(e), x.g+1, x))
             
 def reconstructPath(Item):
-    #later
-    pass
+    global PATH
+    PATH.clear()
+    print(Item.grid)
+
+    x = Item
+    y= 0
+    while x.parentState:
+        PATH.add(x)
+        x= x.parentState
+        y = CLOSED[key(x.grid)]
+        pass
+
+    print("total steps req: " + str(Item.g))
+    for g in PATH:
+        print(g.grid)
+    return PATH
 
 
 #----------------------------------------------------------------------
