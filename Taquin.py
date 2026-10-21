@@ -16,7 +16,7 @@ class HeapItem:
 
 OPEN = []
 CLOSED = {}
-PATH = set()
+PATH = []
 
 GOAL = [ [1, 2, 3], [8, 0, 4], [7, 6, 5], ]
 
@@ -52,7 +52,7 @@ def solve():
 
     s0 = [row[:] for row in board] #save init state
     if key(s0) == key(gboard):
-        print("the grid already solved")
+        result.config(text= "the grid already solved")
         return
     
     heapq.heappush(OPEN, HeapItem(s0, calcEuclidean(s0), 0, None))
@@ -60,7 +60,7 @@ def solve():
         sol = Astar()
 
     if winState == False:
-        print("cant be solved")
+        result.config(text= "cant solve")
     else:
         reconstructPath(sol)
 
@@ -89,24 +89,20 @@ def Astar():
                 continue
             else:
                 heapq.heappush(OPEN, HeapItem(e, x.g+1+calcEuclidean(e), x.g+1, x))
-            
+
+
 def reconstructPath(Item):
     global PATH
-    PATH.clear()
-    print(Item.grid)
-
+    PATH = []
     x = Item
     while x:
-        PATH.add(x)
-        x= x.parentState
-
-    sorted(PATH, key= lambda x: x.g)
-
-
-    print("total steps req: " + str(Item.g))
+        PATH.append(x)
+        x = x.parentState
+    PATH.reverse()
+    PATH = PATH[1:]
     for g in PATH:
         print(g.grid, g.g, g.f)
-    return PATH
+    result.config(text=f"steps to solve (aka g): {Item.g}")
 
 
 #----------------------------------------------------------------------
@@ -131,6 +127,25 @@ def empty(grid):
             if grid[row][col] == 0 :
                 return row, col
 
+def spot():
+    global board
+    try:
+        vals = [int(e.get()) for e in entries]
+        vals2 = [int(e.get()) for e in entries]
+        vals.sort()
+    except ValueError:
+        print("wrong input")
+        return
+    i = 0
+    if set(vals) == target_set:
+        for col in range(3):
+            for row in range(3):
+                board[row][col] = vals2[i]
+                i+=1
+        createBoard()
+    else:
+        print("no")
+
 def createBoard():
     canvas.delete("all")
     for row in range(3):
@@ -144,22 +159,48 @@ def createBoard():
                 canvas.create_rectangle(x0, y0, x1, y1, fill= "#7B64B6")
                 canvas.create_text((x1+ x0)/2, (y1+y0)/2, text= str(num), fill="#000000", font=("Helvetica", 30))
 
-root = tk.Tk()
-root.title("Taquin")
-root.geometry("600x600")
-root.configure(bg="#18252D")
+def constShowup():
+    global board
+    for i in PATH:
+        board = [row[:] for row in i.grid]
+        createBoard()
+        root.update()
+        root.after(500)
 
-title = tk.Label(root, text="test", fg="white", bg="#421615",
+
+root = tk.Tk()
+root.title("Taquin solver")
+root.geometry("900x400")
+root.configure(bg="#121313")
+
+title = tk.Label(root, text="Taquin solver using A* algorithm", fg="white", bg="#121313",
                  font=("Helvetica", 20, "bold"))
 title.pack(pady=10)
-status = tk.Label(root, text="idk man text", fg="gray", bg="#421615")
-status.pack(side="right")
 canvas = tk.Canvas(root, width=300, height=300, bg="#448fe6",
                    highlightthickness=0)
-canvas.pack(padx=10, pady=10)
+canvas.pack(padx=10, pady=10, side= "left")
 canvas.bind("<Button-1>", clicked)
 btn = tk.Button(root, text="Solve", command=solve)
-btn.pack(pady=20)
+btn.pack(pady=20, side= "left")
+
+entries = []
+target_set = set(range(9))
+
+for i in range(9):
+    e = tk.Entry(root, width=5, justify="center")
+    e.place(x=( 400 + ((i // 3) * 40)), y=( 100 + ((i % 3) * 40)))
+    entries.append(e)
+
+btn2 = tk.Button(root, text="update grid", command=spot)
+btn2.place(x = 400, y= 220)
+
+result = tk.Label(root, text=" ", bg= "black", fg= "white", 
+                  font=("Helvetica", 20, "bold"))
+result.place(x= 500, y= 220)
+
+btncons= tk.Button(root, text="see solving path", command=constShowup)
+btncons.place(x = 320, y= 300)
+
 
 
 createBoard()
