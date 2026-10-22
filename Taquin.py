@@ -2,8 +2,6 @@ import tkinter as tk
 import heapq
 import math
 
-#hi again how's life
-
 class HeapItem:
     def __init__(self, grid, f, g, parent = None):
         self.grid = grid
@@ -21,7 +19,7 @@ PATH = []
 GOAL = [ [1, 2, 3], [8, 0, 4], [7, 6, 5], ]
 
 gboard = [row[:] for row in GOAL]
-board = [row[:] for row in GOAL] #copy not alias
+board = [row[:] for row in GOAL]
 goal_pos = {}
 for r in range(3):
     for c in range(3):
@@ -49,18 +47,20 @@ def solve():
     winState = False
     OPEN.clear()
     CLOSED.clear()
+    PATH.clear()
 
-    s0 = [row[:] for row in board] #save init state
+    s0 = [row[:] for row in board]
     if key(s0) == key(gboard):
-        result.config(text= "the grid already solved")
+        result.config(text="Already solved!")
         return
     
     heapq.heappush(OPEN, HeapItem(s0, calcEuclidean(s0), 0, None))
-    while winState == False and OPEN:
+    sol = None
+    while not winState and OPEN:
         sol = Astar()
 
-    if winState == False:
-        result.config(text= "cant solve")
+    if not winState:
+        result.config(text="Cant solve")
     else:
         reconstructPath(sol)
 
@@ -77,7 +77,7 @@ def searchPos(grid):
     return solStack
        
 def Astar():
-    global winState
+    global winState, OPEN, CLOSED
     x = heapq.heappop(OPEN)
     if key(x.grid) not in CLOSED:
         CLOSED[key(x.grid)] = x
@@ -89,7 +89,6 @@ def Astar():
                 continue
             else:
                 heapq.heappush(OPEN, HeapItem(e, x.g+1+calcEuclidean(e), x.g+1, x))
-
 
 def reconstructPath(Item):
     global PATH
@@ -104,37 +103,29 @@ def reconstructPath(Item):
         print(g.grid, g.g, g.f)
     result.config(text=f"steps to solve (aka g): {Item.g}")
 
-
-#----------------------------------------------------------------------
-
-
-#gui need rebuilding
-def clicked(e):
-    col = e.x // 100
-    row = e.y // 100
-    erow, ecol = empty(board)
-    print("click (" + str(col) + "," + str(row) + ")= " + str(board[row][col]))
-    if abs(col - ecol) + abs(row - erow) == 1 : 
-        board[row][col], board[erow][ecol] = board[erow][ecol] , board[row][col]
-        print("swapped")
-        createBoard()
-    else:
-        print("unable not adj")
-
 def empty(grid):
     for row in range(3):
         for col in range(3):
             if grid[row][col] == 0 :
                 return row, col
 
+# ---------------- GUI ----------------
+
+def clicked(e):
+    col = e.x // 100
+    row = e.y // 100
+    erow, ecol = empty(board)
+    if abs(col - ecol) + abs(row - erow) == 1 : 
+        board[row][col], board[erow][ecol] = board[erow][ecol] , board[row][col]
+        createBoard()
+
 def spot():
     global board
     try:
-        vals = [int(e.get()) for e in entries]
         vals2 = [int(e.get()) for e in entries]
-        vals.sort()
+        vals = sorted(vals2)
     except ValueError:
-        print("wrong input")
+        result.config(text="Invalid input!")
         return
     i = 0
     if set(vals) == target_set:
@@ -143,11 +134,13 @@ def spot():
                 board[row][col] = vals2[i]
                 i+=1
         createBoard()
+        result.config(text="Grid updated")
     else:
-        print("no")
+        result.config(text="Must use 0-8")
 
 def createBoard():
     canvas.delete("all")
+    canvas.create_rectangle(0, 0, 300, 300, fill="#2b2b3d", outline="")
     for row in range(3):
         for col in range(3):
             num = board[row][col]
@@ -157,9 +150,10 @@ def createBoard():
             y1 = y0 + 100
             if num != 0:
                 canvas.create_rectangle(x0, y0, x1, y1, fill= "#7B64B6")
-                canvas.create_text((x1+ x0)/2, (y1+y0)/2, text= str(num), fill="#000000", font=("Helvetica", 30))
+                canvas.create_text((x1+ x0)/2, (y1+y0)/2, text= str(num),
+                                   fill="#A3A29A", font=("Helvetica", 30))
 
-def constShowup():
+def pathVisual():
     global board
     for i in PATH:
         board = [row[:] for row in i.grid]
@@ -173,35 +167,80 @@ root.title("Taquin solver")
 root.geometry("900x400")
 root.configure(bg="#121313")
 
-title = tk.Label(root, text="Taquin solver using A* algorithm", fg="white", bg="#121313",
+#in case u saw this hi (have fun reading my code cuz i had fun writing it)
+
+title = tk.Label(root,
+                 text="Taquin solver using A* algorithm",
+                 fg="#545C7E", bg="#121313",
                  font=("Helvetica", 20, "bold"))
 title.pack(pady=10)
-canvas = tk.Canvas(root, width=300, height=300, bg="#448fe6",
+
+canvas = tk.Canvas(root,
+                   width=300, height=300,
+                   bg="#545C7E",
                    highlightthickness=0)
-canvas.pack(padx=10, pady=10, side= "left")
+canvas.pack(side= "left")
 canvas.bind("<Button-1>", clicked)
-btn = tk.Button(root, text="Solve", command=solve)
-btn.pack(pady=20, side= "left")
+
+rightF = tk.Frame(root,
+                 bg="#121313")
+rightF.pack(side="left", fill="both", expand=True, padx= 10, pady= 10)
+
+resultF  = tk.Frame(rightF,
+                        bg="#121313")
+resultF.pack(side="bottom", fill="both", expand=True, pady= 20)
+
+controlF  = tk.Frame(rightF,
+                         bg="#121313",
+                          height= 200)
+controlF.pack(side="top", fill="both", expand=True, pady= 10)
+
+btnF  = tk.Frame(controlF,
+                         bg="#121313")
+btnF.pack(side="left", fill="both", expand=True, padx= 20, pady= 10)
+
+manualF  = tk.Frame(controlF,
+                         bg="#121313")
+manualF.pack(side="left", fill="both", expand=True, padx= 20, pady= 10)
+
+btn_update = tk.Button(btnF ,
+                       text="Update Grid", command=spot,
+                       bg="#7B64B6", fg="white",
+                       font=("Helvetica", 11, "bold"),
+                       relief="flat",
+                       padx=10, pady=4)
+btn_update.pack(side="top", padx=4, pady= 10)
+
+btn_solve = tk.Button(btnF ,
+                      text="Solve", command=solve,
+                      bg="#7B64B6", fg="white",
+                      font=("Helvetica", 11, "bold"),
+                      relief="flat",
+                      padx=10, pady=4)
+btn_solve.pack(side="top", padx=4, pady= 10)
+
+btn_path = tk.Button(btnF ,
+                     text="Show Path", command=pathVisual,
+                     bg="#7B64B6", fg="white",
+                     font=("Helvetica", 11, "bold"),
+                     relief="flat",
+                     padx=10, pady=4)
+btn_path.pack(side="top", padx=4, pady= 10)
+
+result = tk.Label(resultF,
+                  text=" ",
+                  bg="#545C7E", fg="white",
+                  font=("Helvetica", 13, "bold"),
+                  height=2, width=34,
+                  relief="flat")
+result.pack(pady=10, anchor="w", side= "left")
 
 entries = []
 target_set = set(range(9))
-
 for i in range(9):
-    e = tk.Entry(root, width=5, justify="center")
-    e.place(x=( 400 + ((i // 3) * 40)), y=( 100 + ((i % 3) * 40)))
+    e = tk.Entry(manualF, width=5)
+    e.place(x=(20 +((i // 3) * 40)), y=(20 +((i % 3) * 40)))
     entries.append(e)
-
-btn2 = tk.Button(root, text="update grid", command=spot)
-btn2.place(x = 400, y= 220)
-
-result = tk.Label(root, text=" ", bg= "black", fg= "white", 
-                  font=("Helvetica", 20, "bold"))
-result.place(x= 500, y= 220)
-
-btncons= tk.Button(root, text="see solving path", command=constShowup)
-btncons.place(x = 320, y= 300)
-
-
 
 createBoard()
 root.mainloop()
