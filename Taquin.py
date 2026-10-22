@@ -16,7 +16,7 @@ OPEN = []
 CLOSED = {}
 PATH = []
 
-GOAL = [ [1, 2, 3], [8, 0, 4], [7, 6, 5], ]
+GOAL = [ [1, 2, 3], [8, 0, 4], [7, 6, 5] ]
 
 gboard = [row[:] for row in GOAL]
 board = [row[:] for row in GOAL]
