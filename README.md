@@ -25,6 +25,7 @@ The board is a `3×3` list of lists; `0` marks the empty tile.
 
 ### Heuristic
 For every tile `t` (excluding `0`):
+
 $$h(n) = \sum \sqrt{(r - r_{goal})^2 + (c - c_{goal})^2}$$
 
 This is **admissible** (never overestimates the true cost), so A\* is guaranteed to find an optimal solution.
