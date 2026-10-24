@@ -27,8 +27,18 @@ for r in range(3):
 
 winState = False
 
-def key(mat):
-    return tuple(tuple(row) for row in mat)
+def Parity(grid):
+    inv = 0
+    flat = [x for row in grid for x in row]
+    tiles = [x for x in flat if x!= 0]
+    for i in range(len(tiles)):
+        for j in range(i+1, len(tiles)):
+            if tiles[i] > tiles[j]:
+                inv +=1
+    return inv % 2
+
+def key(grid):
+    return tuple(tuple(row) for row in grid)
 
 def calcEuclidean(grid):
     h = 0
@@ -49,6 +59,10 @@ def solve():
     CLOSED.clear()
     PATH.clear()
 
+    if Parity(board) != Parity(gboard):
+        result.config(text="Cant solve")
+        return
+
     s0 = [row[:] for row in board]
     if key(s0) == key(gboard):
         result.config(text="Already solved!")
@@ -56,13 +70,10 @@ def solve():
     
     heapq.heappush(OPEN, HeapItem(s0, calcEuclidean(s0), 0, None))
     sol = None
-    while not winState and OPEN:
+    while not winState:
         sol = Astar()
 
-    if not winState:
-        result.config(text="Cant solve")
-    else:
-        reconstructPath(sol)
+    reconstructPath(sol)
 
 def searchPos(grid):
     solStack = []
@@ -167,8 +178,6 @@ root.title("Taquin solver")
 root.geometry("900x400")
 root.configure(bg="#121313")
 
-#in case u saw this hi (have fun reading my code cuz i had fun writing it)
-
 title = tk.Label(root,
                  text="Taquin solver using A* algorithm",
                  fg="#545C7E", bg="#121313",
@@ -244,3 +253,5 @@ for i in range(9):
 
 createBoard()
 root.mainloop()
+
+#stay safe
